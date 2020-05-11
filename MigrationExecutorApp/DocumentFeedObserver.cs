@@ -93,8 +93,7 @@
                     maxConcurrencyPerPartitionKeyRange: 1,
                     disableAutomaticIdGeneration: true,
                     maxInMemorySortingBatchSize: null,
-                    cancellationToken: new CancellationToken(),
-                    maxMiniBatchSizeBytes: 100 * 1024);
+                    cancellationToken: new CancellationToken());
 
                 if (bulkImportResponse.FailedImports.Count > 0 && containerClient != null)
                 {
