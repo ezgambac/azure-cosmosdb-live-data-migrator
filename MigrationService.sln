@@ -13,6 +13,8 @@ Project("{9092AA53-FB77-4645-B42D-1CCCA6BD08BD}") = "MigrationWebClient", "Migra
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebApplication", "WebApplication3\WebApplication.csproj", "{9C01DF55-3A26-4BF6-90F4-30D59A92BA0D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CommonData", "CommonData\CommonData.csproj", "{A7BB3782-0CD0-42E4-82A0-343F8683EF0A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -39,6 +41,10 @@ Global
 		{9C01DF55-3A26-4BF6-90F4-30D59A92BA0D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9C01DF55-3A26-4BF6-90F4-30D59A92BA0D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9C01DF55-3A26-4BF6-90F4-30D59A92BA0D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A7BB3782-0CD0-42E4-82A0-343F8683EF0A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A7BB3782-0CD0-42E4-82A0-343F8683EF0A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A7BB3782-0CD0-42E4-82A0-343F8683EF0A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A7BB3782-0CD0-42E4-82A0-343F8683EF0A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
