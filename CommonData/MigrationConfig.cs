@@ -1,6 +1,6 @@
 ﻿using Newtonsoft.Json;
 
-namespace MigrationProgressApp
+namespace CommonData
 {
     public class MigrationConfig
     {
@@ -93,5 +93,8 @@ namespace MigrationProgressApp
 
         [JsonProperty("blobContainerName")]
         public string BlobContainerName { get; set; }
+
+        [JsonProperty("enableBackAndForthMigration")]
+        public bool EnableBackAndForthMigration { get; set; }
     }
 }

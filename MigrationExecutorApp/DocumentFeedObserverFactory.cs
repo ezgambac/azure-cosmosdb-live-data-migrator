@@ -37,8 +37,7 @@
 
         public IChangeFeedObserver CreateObserver()
         {
-            DocumentFeedObserver newObserver = new DocumentFeedObserver(SourcePartitionKeys, TargetPartitionKey, this.destClient, this.destCollInfo, this.documentTransformer, this.containerClient);
-            return newObserver;
+            return new DocumentFeedObserver(SourcePartitionKeys, TargetPartitionKey, this.destClient, this.destCollInfo, this.documentTransformer, this.containerClient);
         }
     }
 }
