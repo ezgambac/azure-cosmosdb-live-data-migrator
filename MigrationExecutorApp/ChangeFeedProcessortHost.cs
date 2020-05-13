@@ -8,6 +8,8 @@
     using Microsoft.Azure.Documents.ChangeFeedProcessor;
     using Microsoft.Azure.Documents.ChangeFeedProcessor.PartitionManagement;
     using Microsoft.Azure.Documents.Client;
+    using CommonData;
+    using System.Collections.ObjectModel;
 
     public class ChangeFeedProcessorHost
     {
@@ -42,12 +44,13 @@
                 this.config.MonitoredDbName,
                 this.config.MonitoredCollectionName);
 
-            this.CreateCollectionIfNotExistsAsync(
+            await this.CreateCollectionIfNotExistsAsync(
                this.config.MonitoredUri,
                this.config.MonitoredSecretKey,
                this.config.MonitoredDbName,
                this.config.MonitoredCollectionName,
-               this.config.MonitoredThroughput).Wait();
+               this.config.MonitoredThroughput,
+               this.config.SourcePartitionKeys);
 
             Trace.TraceInformation(
                 "Starting lease (transaction log of change feed) standard collection creation: Url {0} - key {1} - dbName {2} - collectionName {3}",
@@ -56,12 +59,13 @@
                 this.config.LeaseDbName,
                 this.config.LeaseCollectionName);
 
-            this.CreateCollectionIfNotExistsAsync(
+            await this.CreateCollectionIfNotExistsAsync(
                 this.config.LeaseUri,
                 this.config.LeaseSecretKey,
                 this.config.LeaseDbName,
                 this.config.LeaseCollectionName,
-                this.config.LeaseThroughput).Wait();
+                this.config.LeaseThroughput,
+                "id");
 
             Trace.TraceInformation(
                 "destination (sink) collection : Url {0} - key {1} - dbName {2} - collectionName {3}",
@@ -70,16 +74,17 @@
                 this.config.DestDbName,
                 this.config.DestCollectionName);
 
-            this.CreateCollectionIfNotExistsAsync(
+            await this.CreateCollectionIfNotExistsAsync(
                 this.config.DestUri,
                 this.config.DestSecretKey,
                 this.config.DestDbName,
                 this.config.DestCollectionName,
-                this.config.DestThroughput).Wait();
+                this.config.DestThroughput,
+                this.config.TargetPartitionKey);
 
             await this.RunChangeFeedHostAsync();
         }
-        public async Task CreateCollectionIfNotExistsAsync(string endPointUri, string secretKey, string databaseName, string collectionName, int throughput)
+        public async Task CreateCollectionIfNotExistsAsync(string endPointUri, string secretKey, string databaseName, string collectionName, int throughput, string partitionKey)
         {
             using (DocumentClient client = new DocumentClient(new Uri(endPointUri), secretKey))
             {
@@ -87,7 +92,10 @@
 
                 await client.CreateDocumentCollectionIfNotExistsAsync(
                     UriFactory.CreateDatabaseUri(databaseName),
-                    new DocumentCollection() { Id = collectionName },
+                    new DocumentCollection() { 
+                        Id = collectionName, 
+                        PartitionKey = new PartitionKeyDefinition() { Paths = new Collection<string>() { $"/{partitionKey}" } }
+                    },
                     new RequestOptions { OfferThroughput = throughput });
             }
         }
@@ -114,7 +122,7 @@
             Trace.TraceInformation("Host name {0}", hostName);
 
             // monitored collection info 
-            var documentCollectionLocation = new DocumentCollectionInfo
+            var sourceCollInfo = new DocumentCollectionInfo
             {
                 Uri = new Uri(this.config.MonitoredUri),
                 MasterKey = this.config.MonitoredSecretKey,
@@ -131,7 +139,7 @@
             policy.PreferredLocations.Add("North Europe");
 
             // lease collection info 
-            var leaseCollectionLocation = new DocumentCollectionInfo
+            var leaseCollectionInfo = new DocumentCollectionInfo
             {
                 Uri = new Uri(this.config.LeaseUri),
                 MasterKey = this.config.LeaseSecretKey,
@@ -149,27 +157,11 @@
                 CollectionName = this.config.DestCollectionName
             };
 
-            var processorOptions = new ChangeFeedProcessorOptions();
-            if(config.DataAgeInHours.HasValue) {
-                if (config.DataAgeInHours.Value >= 0)
-                {
-                    processorOptions.StartTime = DateTime.UtcNow.Subtract(TimeSpan.FromHours(config.DataAgeInHours.Value));
-                }
-            } else
-            {
-                processorOptions.StartFromBeginning = true;
-            }
-
-            processorOptions.LeaseRenewInterval = TimeSpan.FromSeconds(30);
+            var processorOptions = this.GenerateProcessorOptions();
 
             Trace.TraceInformation("Processor options Starts from Beginning - {0}, Lease renew interval - {1}",
                 processorOptions.StartFromBeginning,
                 processorOptions.LeaseRenewInterval.ToString());
-
-            processorOptions.MaxItemCount = 1000;
-            var destClient = new DocumentClient(destCollInfo.Uri, destCollInfo.MasterKey,
-                new ConnectionPolicy() { ConnectionMode = ConnectionMode.Direct, ConnectionProtocol = Protocol.Tcp },
-                ConsistencyLevel.Eventual);
 
             var docTransformer = new DefaultDocumentTransformer();
 
@@ -180,20 +172,63 @@
                 BlobServiceClient blobServiceClient = new BlobServiceClient(config.BlobConnectionString);
                 containerClient = blobServiceClient.GetBlobContainerClient(config.BlobContainerName);
                 await containerClient.CreateIfNotExistsAsync();
-            } 
+            }
+
+            var sourceClient = new DocumentClient(sourceCollInfo.Uri, sourceCollInfo.MasterKey, policy, ConsistencyLevel.Eventual);
+            var destClient = new DocumentClient(destCollInfo.Uri, destCollInfo.MasterKey, policy, ConsistencyLevel.Eventual);
 
             var docObserverFactory = new DocumentFeedObserverFactory(config.SourcePartitionKeys, config.TargetPartitionKey, destClient, destCollInfo, docTransformer, containerClient);
 
             changeFeedProcessor = await new ChangeFeedProcessorBuilder()
                 .WithObserverFactory(docObserverFactory)
                 .WithHostName(hostName)
-                .WithFeedCollection(documentCollectionLocation)
-                .WithLeaseCollection(leaseCollectionLocation)
+                .WithFeedCollection(sourceCollInfo)
+                .WithLeaseCollection(leaseCollectionInfo)
                 .WithProcessorOptions(processorOptions)
-                .WithFeedDocumentClient(new DocumentClient(documentCollectionLocation.Uri, documentCollectionLocation.MasterKey, policy, ConsistencyLevel.Eventual))
+                .WithFeedDocumentClient(sourceClient)
                 .BuildAsync();
             await changeFeedProcessor.StartAsync().ConfigureAwait(false);
+
+            if (config.EnableBackAndForthMigration)
+            {
+                var reverseProcessorOptions = this.GenerateProcessorOptions();
+
+                var reverseDocObserverFactory = new DocumentFeedObserverFactory(config.TargetPartitionKey, config.SourcePartitionKeys, sourceClient, sourceCollInfo, docTransformer, containerClient);
+                var reverseChangeFeedProcessor = await new ChangeFeedProcessorBuilder()
+                    .WithObserverFactory(reverseDocObserverFactory)
+                    .WithHostName(hostName)
+                    .WithFeedCollection(sourceCollInfo)
+                    .WithLeaseCollection(leaseCollectionInfo)
+                    .WithProcessorOptions(reverseProcessorOptions)
+                    .WithFeedDocumentClient(destClient)
+                    .BuildAsync();
+                await reverseChangeFeedProcessor.StartAsync().ConfigureAwait(false);
+            }
+
             return changeFeedProcessor;
+        }
+
+        private ChangeFeedProcessorOptions GenerateProcessorOptions()
+        {
+            var processorOptions = new ChangeFeedProcessorOptions
+            {
+                LeaseRenewInterval = TimeSpan.FromSeconds(30),
+                MaxItemCount = 1000,
+                LeasePrefix = Guid.NewGuid().ToString()
+            };
+            if (config.DataAgeInHours.HasValue)
+            {
+                if (config.DataAgeInHours.Value >= 0)
+                {
+                    processorOptions.StartTime = DateTime.UtcNow.Subtract(TimeSpan.FromHours(config.DataAgeInHours.Value));
+                }
+            }
+            else
+            {
+                processorOptions.StartFromBeginning = true;
+            }
+
+            return processorOptions;
         }
     }
 }
