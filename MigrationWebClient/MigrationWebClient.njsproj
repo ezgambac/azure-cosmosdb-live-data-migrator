@@ -13,7 +13,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>80cd0f27-9b65-4bc2-a16a-f660e416b222</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>src\app.js</StartupFile>
+    <StartupFile>app.js</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
@@ -32,32 +32,31 @@
   <ItemGroup>
     <None Include="clientapp.pubxml" />
     <Content Include="README.md" />
-    <Content Include="src\.DS_Store" />
-    <Content Include="src\package.json" />
-    <Content Include="src\public\stylesheets\style.css" />
-    <Content Include="src\views\error.jade" />
-    <Content Include="src\views\index.jade" />
-    <Content Include="src\views\layout.jade" />
-    <Content Include="src\web.config" />
-    <Content Include="src\www" />
+    <Content Include=".DS_Store" />
+    <Content Include="package.json" />
+    <Content Include="public\stylesheets\style.css" />
+    <Content Include="views\error.jade" />
+    <Content Include="views\index.jade" />
+    <Content Include="views\layout.jade" />
+    <Content Include="web.config" />
+    <Content Include="www" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="media\" />
-    <Folder Include="src\" />
-    <Folder Include="src\models\" />
-    <Folder Include="src\public\" />
-    <Folder Include="src\public\stylesheets\" />
-    <Folder Include="src\routes\" />
-    <Folder Include="src\views\" />
+    <Folder Include="models\" />
+    <Folder Include="public\" />
+    <Folder Include="public\stylesheets\" />
+    <Folder Include="routes\" />
+    <Folder Include="views\" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="src\app.js" />
-    <Compile Include="src\config.js" />
-    <Compile Include="src\models\docdbUtils.js" />
-    <Compile Include="src\models\migrationDao.js" />
-    <Compile Include="src\routes\index.js" />
-    <Compile Include="src\routes\migrationlist.js" />
-    <Compile Include="src\routes\state.js" />
+    <Compile Include="app.js" />
+    <Compile Include="config.js" />
+    <Compile Include="models\docdbUtils.js" />
+    <Compile Include="models\migrationDao.js" />
+    <Compile Include="routes\index.js" />
+    <Compile Include="routes\migrationlist.js" />
+    <Compile Include="routes\state.js" />
   </ItemGroup>
   <!-- Do not delete the following Import Project.  While this appears to do nothing it is a marker for setting TypeScript properties before our import that depends on them. -->
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\TypeScript\Microsoft.TypeScript.targets" Condition="False" />

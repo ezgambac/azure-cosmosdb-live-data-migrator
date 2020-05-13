@@ -12,7 +12,7 @@ html
       div.navbar-header
         a.navbar-brand(href='#') Migrations
     block content
-    
+
     h1 #{title} App
     if (typeof migration === "undefined")
       form.well(action="/addMigration", method="post")
@@ -35,8 +35,8 @@ html
           label(for="destSecretKey") Destination Key:
           input.form-control(name="destSecretKey", type="textbox")
         .form-group
-          label(for="destdestDbName") Destination DB:
-          input.form-control(name="destDbName", type="textbox")   
+          label(for="destDbName") Destination DB:
+          input.form-control(name="destDbName", type="textbox")
         .form-group
           label(for="destCollectionName") Destination Collection:
           input.form-control(name="destCollectionName", type="textbox")
@@ -45,13 +45,13 @@ html
           input.form-control(name="sourcePartitionKeys", type="textbox")
         .form-group
           label(for="targetPartitionKey") Target Partition Key Attribute (Optional):
-          input.form-control(name="targetPartitionKey", type="textbox")	  
+          input.form-control(name="targetPartitionKey", type="textbox")
         .form-group
           label(for="leaseUri") Lease Uri:
           input.form-control(name="leaseUri", type="textbox")
         .form-group
           label(for="leaseSecretKey") Lease Key:
-          input.form-control(name="leaseSecretKey", type="textbox")    
+          input.form-control(name="leaseSecretKey", type="textbox")
         .form-group
           label(for="leaseDbName") Lease Collection DB:
           input.form-control(name="leaseDbName", type="textbox")
@@ -65,8 +65,8 @@ html
           label(for="blobContainerName") Blob Container Name for Failed/Bad Records tracking (Optional) :
           input.form-control(name="blobContainerName", type="textbox")
         .form-group
-          label(for="dataAgeInHours") Maximum data age in hours (Optional) :
-          input.form-control(name="dataAgeInHours", type="textbox")  
+          label(for="enableBackAndForthMigration") Enables writing changes from destination back to source (Optional) :
+          input.form-control(name="enableBackAndForthMigration", type="checkbox", value="true")
 
         br
         button.btn(type="submit") Start Migration
@@ -79,50 +79,48 @@ html
           tr
             td Source Endpoint
             td #{migration.monitoredUri}
-          tr 
+          tr
             td Source DB
             td #{migration.monitoredDbName}
-          tr 
+          tr
             td Source Coll
             td #{migration.monitoredCollectionName}
-          tr 
+          tr
             td Destination Uri
             td #{migration.destUri}
-          tr 
+          tr
             td Destination DB
             td #{migration.destDbName}
-          tr 
+          tr
             td Destination Coll
             td #{migration.destCollectionName}
-          tr 
+          tr
             td Percentage Completed
             td #{migration.percentageCompleted.toFixed(3)} %
-          tr 
+          tr
             td Elapsed Time
             td #{migration.elapsedTime.toFixed(3)} hours
-          tr 
+          tr
             td Source count
-            td #{migration.sourceCollectionCount} docs 
-          tr 
+            td #{migration.sourceCollectionCount} docs
+          tr
             td Destination count
-            td #{migration.destinationCollectionCount} docs    
-          tr 
+            td #{migration.destinationCollectionCount} docs
+          tr
             td Eta
             td #{migration.eta.toFixed(3)} hours
-          tr 
+          tr
             td Average insert rate
-            td #{migration.averageInsertRate.toFixed(3)} docs/sec     
-          tr 
+            td #{migration.averageInsertRate.toFixed(3)} docs/sec
+          tr
             td current insert rate
-            td #{migration.currentInsertRate.toFixed(3)} docs/sec    
-          tr 
+            td #{migration.currentInsertRate.toFixed(3)} docs/sec
+          tr
             td Complete
-            td #{migration.completed || false}         
+            td #{migration.completed || false}
 
-        br    
+        br
         button.btn.btn-primary(type="submit") Complete Migration
 
       form(action="/reverseMigration", method="post")
         button.btn.btn-primary(type="submit") Reverse Migration
-       
-
